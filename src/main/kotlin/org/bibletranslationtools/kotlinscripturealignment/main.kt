@@ -75,7 +75,6 @@ class BurritoAudioAlignment(
             println(record)
             record
         }
-        println(records)
     }
 
     companion object {
