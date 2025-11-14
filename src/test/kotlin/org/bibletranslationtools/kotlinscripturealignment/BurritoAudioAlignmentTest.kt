@@ -48,4 +48,17 @@ class BurritoAudioAlignmentTest {
         assertEquals(listOf("00:00:00.000 --> 00:00:01.927"), alignment.records[0].cue)
         assertEquals(listOf("en+ulb.EPH:0"), alignment.records[0].textReference)
     }
+
+    @Test
+    fun testLoadApmExample() {
+        val resource = javaClass.classLoader.getResource("apm_example.json")
+        val file = File(resource!!.file)
+        val alignment = BurritoAudioAlignment.load(file)
+
+        assertEquals(FormatType.ALIGNMENT, alignment.format)
+        assertEquals("0.4", alignment.version)
+        assertEquals("audio-reference", alignment.type)
+        assertEquals(listOf("timecode", "text-reference"), alignment.roles)
+        // Expecting failure here due to 'groups' structure
+    }
 }
