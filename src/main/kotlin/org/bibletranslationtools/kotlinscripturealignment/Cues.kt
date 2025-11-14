@@ -2,7 +2,6 @@ package org.bibletranslationtools.kotlinscripturealignment
 
 import java.util.regex.Pattern
 
-
 val CUE_HEADER_PATTERN: Pattern = Pattern.compile("^(\\S+)\\s+-->\\s+(\\S+)(.*)?$")
 private val CUE_SETTING_PATTERN: Pattern = Pattern.compile("(\\S+?):(\\S+)")
 

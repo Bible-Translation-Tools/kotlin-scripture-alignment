@@ -59,6 +59,26 @@ class BurritoAudioAlignmentTest {
         assertEquals("0.4", alignment.version)
         assertEquals("audio-reference", alignment.type)
         assertEquals(listOf("timecode", "text-reference"), alignment.roles)
-        // Expecting failure here due to 'groups' structure
+
+        assertNotNull(alignment.groups)
+        assertEquals(15, alignment.groups?.size)
+
+        val firstGroup = alignment.groups?.get(0)
+        assertNotNull(firstGroup)
+        assertEquals(2, (firstGroup?.documents as? DocumentsList)?.list?.size)
+        assertEquals("vtt-timecode", (firstGroup?.documents as? DocumentsList)?.list?.get(0)?.scheme)
+        assertEquals("42LUK/001/SEHSAM-LUK-1_1-4v1.mp3", (firstGroup?.documents as? DocumentsList)?.list?.get(0)?.docid)
+        assertEquals("u23003", (firstGroup?.documents as? DocumentsList)?.list?.get(1)?.scheme)
+        assertNull((firstGroup?.documents as? DocumentsList)?.list?.get(1)?.docid)
+
+        assertEquals(4, firstGroup?.records?.size)
+        assertEquals(listOf(listOf("000:00:00.000 --> 000:00:05.860"), listOf("LUK 1:1")), firstGroup?.records?.get(0)?.references)
+        assertEquals(listOf(listOf("000:00:05.860 --> 000:00:12.268"), listOf("LUK 1:2")), firstGroup?.records?.get(1)?.references)
+        assertEquals(listOf(listOf("000:00:12.268 --> 000:00:24.129"), listOf("LUK 1:3")), firstGroup?.records?.get(2)?.references)
+        assertEquals(listOf(listOf("000:00:24.129 --> 000:00:28.328"), listOf("LUK 1:4")), firstGroup?.records?.get(3)?.references)
+
+        val seventhGroup = alignment.groups?.get(6)
+        assertNotNull(seventhGroup)
+        assertEquals(0, seventhGroup?.records?.size)
     }
 }
