@@ -16,25 +16,23 @@ import org.bibletranslationtools.vtt.*
 import java.io.File
 import java.util.regex.Matcher
 
+sealed interface Documents
+data class DocumentsList(val list: List<DocumentReference>) : Documents
+data class DocumentsMap(val map: Map<String, DocumentReference>) : Documents
+
 // Custom Deserializer for the 'documents' field
-class DocumentsDeserializer @JvmOverloads constructor(vc: Class<*>? = null) : StdDeserializer<Any>(vc) {
-    override fun deserialize(jp: com.fasterxml.jackson.core.JsonParser, ctxt: DeserializationContext): Any? {
+class DocumentsDeserializer @JvmOverloads constructor(vc: Class<*>? = null) : StdDeserializer<Documents>(vc) {
+    override fun deserialize(jp: com.fasterxml.jackson.core.JsonParser, ctxt: DeserializationContext): Documents? {
         val node: JsonNode = jp.codec.readTree(jp)
-        println("DocumentsDeserializer: node type is ${node.nodeType}")
         return if (node.isArray) {
-            println("DocumentsDeserializer: node is Array")
             val listType = ctxt.typeFactory.constructCollectionType(List::class.java, DocumentReference::class.java)
             val listValue = jp.codec.readValue(node.traverse(), listType) as List<DocumentReference>
-            println("DocumentsDeserializer: deserialized listValue = $listValue")
-            listValue
+            DocumentsList(listValue)
         } else if (node.isObject) {
-            println("DocumentsDeserializer: node is Object")
             val mapType = ctxt.typeFactory.constructMapLikeType(Map::class.java, String::class.java, DocumentReference::class.java)
             val mapValue = jp.codec.readValue<Map<String, DocumentReference>>(node.traverse(), mapType)
-            println("DocumentsDeserializer: deserialized mapValue = $mapValue")
-            mapValue
+            DocumentsMap(mapValue)
         } else {
-            println("DocumentsDeserializer: node is neither Array nor Object")
             null
         }
     }
@@ -52,7 +50,7 @@ data class BurritoAudioAlignment(
 
     @JsonDeserialize(using = DocumentsDeserializer::class)
     @JsonProperty("documents")
-    var documents: Any = Any(),
+    var documents: Documents? = null,
 
     @JsonProperty("roles")
     var roles: List<String>? = null,
@@ -65,13 +63,17 @@ data class BurritoAudioAlignment(
     var alignmentFile: File? = null
 
     fun audioFileName(): String {
-        val timecodeDocList = (documents as? List<DocumentReference>)?.firstOrNull { it.scheme == "vtt-timecode" }
-        if (timecodeDocList != null) return timecodeDocList.docid ?: timecodeDocList.scheme ?: ""
-
-        val timecodeDocMap = (documents as? Map<String, DocumentReference>)?.get("timecode")
-        if (timecodeDocMap != null) return timecodeDocMap.docid ?: timecodeDocMap.scheme ?: ""
-
-        return ""
+        return when (documents) {
+            is DocumentsList -> {
+                val timecodeDoc = (documents as DocumentsList).list.firstOrNull { it.scheme == "vtt-timecode" }
+                timecodeDoc?.docid ?: timecodeDoc?.scheme ?: ""
+            }
+            is DocumentsMap -> {
+                val timecodeDoc = (documents as DocumentsMap).map["timecode"]
+                timecodeDoc?.docid ?: timecodeDoc?.scheme ?: ""
+            }
+            else -> ""
+        }
     }
 
     @JsonIgnore
@@ -110,11 +112,8 @@ data class BurritoAudioAlignment(
             val cue = it.cue
             val timecodeRef = listOf("${timestamp(cue.startTimeUs)} --> ${timestamp(cue.endTimeUs)}")
             val textRef = listOf(it.tag)
-            val orderedRefs = if (this.roles?.getOrNull(0) == "timecode") listOf(timecodeRef, textRef) else listOf(textRef, timecodeRef)
-
-            val record = Record(orderedRefs, mapOf("creator" to "kotlin-aligner"))
-            println(record)
-            record
+            // We are setting cue and textReference directly here, not relying on 'references' initially
+            Record(cue = timecodeRef, textReference = textRef, meta = mapOf("creator" to "kotlin-aligner"))
         }
     }
 
@@ -132,9 +131,11 @@ data class BurritoAudioAlignment(
                 FormatType.ALIGNMENT,
                 "0.3",
                 "audio-reference",
-                listOf(
-                    DocumentReference("vtt-timecode", audioFile.name),
-                    DocumentReference("u23003", null)
+                DocumentsList(
+                    listOf(
+                        DocumentReference("vtt-timecode", audioFile.name),
+                        DocumentReference("u23003", null)
+                    )
                 ),
                 listOf("timecode", "text-reference"),
                 listOf()
@@ -172,28 +173,72 @@ class DocumentReference(
     val docid: String? = null
 )
 
+// Custom Deserializer for the 'Record' class
+class RecordDeserializer @JvmOverloads constructor(vc: Class<*>? = null) : StdDeserializer<Record>(vc) {
+    override fun deserialize(jp: com.fasterxml.jackson.core.JsonParser, ctxt: DeserializationContext): Record {
+        val node: JsonNode = jp.codec.readTree(jp)
+
+        val cueNode = node.get("cue")
+        val timecodeNode = node.get("timecode")
+        val textReferenceNode = node.get("text-reference")
+        val referencesNode = node.get("references")
+        val metaNode = node.get("meta")
+
+        val cue: List<String>? = if (cueNode != null) jp.codec.readValue(cueNode.traverse(), ctxt.typeFactory.constructCollectionType(List::class.java, String::class.java)) else null
+        val timecode: List<String>? = if (timecodeNode != null) jp.codec.readValue(timecodeNode.traverse(), ctxt.typeFactory.constructCollectionType(List::class.java, String::class.java)) else null
+        val textReference: List<String>? = if (textReferenceNode != null) jp.codec.readValue(textReferenceNode.traverse(), ctxt.typeFactory.constructCollectionType(List::class.java, String::class.java)) else null
+        val references: List<List<String>> = if (referencesNode != null) jp.codec.readValue(referencesNode.traverse(), ctxt.typeFactory.constructCollectionType(List::class.java, ctxt.typeFactory.constructCollectionType(List::class.java, String::class.java))) else listOf()
+        val meta: Map<String, Any>? = if (metaNode != null) jp.codec.readValue(metaNode.traverse(), ctxt.typeFactory.constructMapLikeType(Map::class.java, String::class.java, Any::class.java)) else null
+
+        return Record(cue, timecode, textReference, references, meta)
+    }
+}
+
 // const val CUE_HEADER_PATTERN: Pattern = Pattern.compile("^(\\S+)\\s+-->\\s+(\\S+)(.*)?$")
+@JsonDeserialize(using = RecordDeserializer::class)
 class Record(
+    @JsonProperty("cue")
+    val cue: List<String>? = null,
+
+    @JsonProperty("timecode")
+    val timecode: List<String>? = null,
+
+    @JsonProperty("text-reference")
+    val textReference: List<String>? = null,
+
     @JsonProperty("references")
     val references: List<List<String>> = listOf(),
     @JsonProperty("meta")
     val meta: Map<String, Any>? = null
 ) {
     fun toWebVttCueContent(roles: List<String>?): WebVttDocument.WebVttCueContent? {
-        val timecodeIndex = roles?.indexOf("timecode") ?: -1
-        val textReferenceIndex = roles?.indexOf("text-reference") ?: -1
+        val rawTimestamp: String?
+        val rawReference: String?
 
-        if (timecodeIndex == -1 || textReferenceIndex == -1) {
-            return null // Roles not found, cannot determine which reference is which
+        // Prioritize direct fields if available
+        rawTimestamp = this.cue?.firstOrNull() ?: this.timecode?.firstOrNull()
+        rawReference = this.textReference?.firstOrNull()
+
+        if (rawTimestamp == null || rawReference == null) {
+            // Fallback to references list if direct fields are not present
+            val timecodeIndex = roles?.indexOf("timecode") ?: -1
+            val textReferenceIndex = roles?.indexOf("text-reference") ?: -1
+
+            if (timecodeIndex == -1 || textReferenceIndex == -1) {
+                return null // Roles not found, cannot determine which reference is which
+            }
+            val timestampFromRefs = references.getOrNull(timecodeIndex)?.firstOrNull()
+            val referenceFromRefs = references.getOrNull(textReferenceIndex)?.firstOrNull()
+            if (timestampFromRefs == null || referenceFromRefs == null) {
+                return null
+            }
+            return parseAndCreateCueContent(timestampFromRefs, referenceFromRefs)
+        } else {
+            return parseAndCreateCueContent(rawTimestamp, rawReference)
         }
+    }
 
-        val timestamp = references.getOrNull(timecodeIndex)?.firstOrNull()
-        val reference = references.getOrNull(textReferenceIndex)?.firstOrNull()
-
-        if (timestamp == null || reference == null) {
-            return null
-        }
-
+    private fun parseAndCreateCueContent(timestamp: String, reference: String): WebVttDocument.WebVttCueContent? {
         val cue = Cue.Builder().build()
         var cueHeaderMatcher: Matcher = CUE_HEADER_PATTERN.matcher(timestamp)
         try {
