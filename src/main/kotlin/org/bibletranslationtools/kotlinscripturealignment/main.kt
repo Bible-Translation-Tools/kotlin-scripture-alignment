@@ -26,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import java.io.File
 import java.util.regex.Matcher
 import java.util.regex.Pattern
+import com.fasterxml.jackson.databind.SerializationFeature
 
 sealed interface Documents
 data class DocumentsList(val list: List<DocumentReference>) : Documents
@@ -119,7 +120,13 @@ data class BurritoAudioAlignment(
         val mapper = ObjectMapper().registerKotlinModule()
         val module = SimpleModule()
         module.addSerializer(Documents::class.java, DocumentsSerializer())
+        module.addSerializer(BurritoAudioAlignment::class.java, BurritoAudioAlignmentSerializer())
+        module.addSerializer(Group::class.java, GroupSerializer())
         mapper.registerModule(module)
+        
+        mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false)
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL)
+
         outFile.outputStream().use {
             mapper.writeValue(it, this)
         }
@@ -171,6 +178,15 @@ data class BurritoAudioAlignment(
             )
 
             val mapper = ObjectMapper().registerKotlinModule()
+            val module = SimpleModule()
+            module.addSerializer(Documents::class.java, DocumentsSerializer())
+            module.addSerializer(BurritoAudioAlignment::class.java, BurritoAudioAlignmentSerializer())
+            module.addSerializer(Group::class.java, GroupSerializer())
+            mapper.registerModule(module)
+
+            mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false)
+            mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL)
+
             timingFile.outputStream().use {
                 mapper.writeValue(it, alignment)
             }
@@ -361,20 +377,84 @@ class DocumentsSerializer @JvmOverloads constructor(t: Class<Documents>? = null)
     }
 }
 
+class BurritoAudioAlignmentSerializer @JvmOverloads constructor(t: Class<BurritoAudioAlignment>? = null) : StdSerializer<BurritoAudioAlignment>(t) {
+    override fun serialize(value: BurritoAudioAlignment?, gen: JsonGenerator, provider: SerializerProvider) {
+        if (value == null) {
+            gen.writeNull()
+            return
+        }
+
+        gen.writeStartObject()
+        gen.writeStringField("format", value.format.value())
+        gen.writeStringField("version", value.version)
+        gen.writeStringField("type", value.type)
+
+        // Conditionally serialize documents and records based on whether groups is present
+        if (value.groups.isNullOrEmpty()) {
+            if (value.documents != null) {
+                gen.writeFieldName("documents")
+                gen.writeObject(value.documents) // This will use DocumentsSerializer
+            }
+            if (value.roles != null) {
+                gen.writeFieldName("roles")
+                gen.writeObject(value.roles)
+            }
+            if (value.records.isNotEmpty()) {
+                gen.writeFieldName("records")
+                gen.writeObject(value.records)
+            }
+        } else {
+            // If groups is present, omit top-level documents, roles, and records
+            gen.writeFieldName("groups")
+            gen.writeObject(value.groups)
+        }
+        gen.writeEndObject()
+    }
+}
+
+class GroupSerializer @JvmOverloads constructor(t: Class<Group>? = null) : StdSerializer<Group>(t) {
+    override fun serialize(value: Group?, gen: JsonGenerator, provider: SerializerProvider) {
+        if (value == null) {
+            gen.writeNull()
+            return
+        }
+
+        gen.writeStartObject()
+        if (value.documents != null) {
+            gen.writeFieldName("documents")
+            gen.writeObject(value.documents)
+        }
+        // This condition 'value.records != null' is always true because records is List<Record> = listOf()
+        // and `Group`'s `records` is not nullable.
+        // We need to write it if it's not empty, or if `WRITE_EMPTY_JSON_ARRAYS` is true (which we set to false globally).
+        // So, only write if not empty, which `isNotEmpty()` already handles.
+        if (value.records.isNotEmpty()) {
+            gen.writeFieldName("records")
+            gen.writeObject(value.records)
+        }
+        gen.writeEndObject()
+    }
+}
+
 // Original Record definition, kept for clarity of what BurritoAudioAlignmentDeserializer needs
 class Record(
     @JsonProperty("cue")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     val cue: List<String>? = null,
 
     @JsonProperty("timecode")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     val timecode: List<String>? = null,
 
     @JsonProperty("text-reference")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     val textReference: List<String>? = null,
 
     @JsonProperty("references")
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     val references: List<List<String>> = listOf(),
     @JsonProperty("meta")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     val meta: Map<String, Any>? = null
 ) {
     // Removed vtt-related functions
