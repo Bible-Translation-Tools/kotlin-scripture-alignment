@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.io.File
+import org.bibletranslationtools.kotlinscripturealignment.model.BurritoAudioAlignment
+import org.bibletranslationtools.kotlinscripturealignment.model.Record
 
 class BurritoAudioAlignmentRecordsFieldTest {
 

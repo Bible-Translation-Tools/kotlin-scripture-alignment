@@ -5,6 +5,7 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.io.File
+import org.bibletranslationtools.kotlinscripturealignment.model.BurritoAudioAlignment
 
 class BurritoAudioAlignmentRoundTripTest {
 

@@ -6,6 +6,9 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.io.File
+import org.bibletranslationtools.kotlinscripturealignment.model.BurritoAudioAlignment
+import org.bibletranslationtools.kotlinscripturealignment.model.FormatType
+import org.bibletranslationtools.kotlinscripturealignment.model.Group
 
 class BurritoAudioAlignmentSerializationTest {
 

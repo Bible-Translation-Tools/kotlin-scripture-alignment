@@ -8,6 +8,10 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import java.io.File
+import org.bibletranslationtools.kotlinscripturealignment.model.BurritoAudioAlignment
+import org.bibletranslationtools.kotlinscripturealignment.model.DocumentsList
+import org.bibletranslationtools.kotlinscripturealignment.model.DocumentsMap
+import org.bibletranslationtools.kotlinscripturealignment.model.DocumentReference
 
 class BurritoAudioAlignmentDocumentsFieldTest {
 

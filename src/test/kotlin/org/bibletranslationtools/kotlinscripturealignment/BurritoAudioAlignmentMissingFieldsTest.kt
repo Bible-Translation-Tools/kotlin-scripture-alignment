@@ -8,6 +8,9 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import java.io.File
+import org.bibletranslationtools.kotlinscripturealignment.model.BurritoAudioAlignment
+import org.bibletranslationtools.kotlinscripturealignment.model.FormatType
+import org.bibletranslationtools.kotlinscripturealignment.model.Record
 
 class BurritoAudioAlignmentMissingFieldsTest {
 
