@@ -74,11 +74,14 @@ data class BurritoAudioAlignment(
                         val timecodeDoc = currentGroupDocuments.list.firstOrNull { it.scheme == "vtt-timecode" }
                         if (timecodeDoc?.docid != null) return timecodeDoc.docid
                     }
+
                     is DocumentsMap -> {
                         val timecodeDoc = currentGroupDocuments.map["timecode"]
                         if (timecodeDoc?.docid != null) return timecodeDoc.docid
                     }
-                    else -> { /* Handle null or other Documents types if necessary */}
+
+                    else -> { /* Handle null or other Documents types if necessary */
+                    }
                 }
             }
         } else if (documents != null) {
@@ -88,11 +91,14 @@ data class BurritoAudioAlignment(
                     val timecodeDoc = currentDocuments.list.firstOrNull { it.scheme == "vtt-timecode" }
                     if (timecodeDoc?.docid != null) return timecodeDoc.docid
                 }
+
                 is DocumentsMap -> {
                     val timecodeDoc = currentDocuments.map["timecode"]
                     if (timecodeDoc?.docid != null) return timecodeDoc.docid
                 }
-                else -> { /* Handle null or other Documents types if necessary */}
+
+                else -> { /* Handle null or other Documents types if necessary */
+                }
             }
         }
         return ""
@@ -122,10 +128,12 @@ data class BurritoAudioAlignment(
         module.addSerializer(Documents::class.java, DocumentsSerializer())
         module.addSerializer(BurritoAudioAlignment::class.java, BurritoAudioAlignmentSerializer())
         module.addSerializer(Group::class.java, GroupSerializer())
+        module.addSerializer(Record::class.java, RecordSerializer())
         mapper.registerModule(module)
-        
+
         mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false)
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL)
+        mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true)
 
         outFile.outputStream().use {
             mapper.writeValue(it, this)
@@ -182,10 +190,12 @@ data class BurritoAudioAlignment(
             module.addSerializer(Documents::class.java, DocumentsSerializer())
             module.addSerializer(BurritoAudioAlignment::class.java, BurritoAudioAlignmentSerializer())
             module.addSerializer(Group::class.java, GroupSerializer())
+            module.addSerializer(Record::class.java, RecordSerializer())
             mapper.registerModule(module)
 
             mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false)
             mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL)
+            mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true)
 
             timingFile.outputStream().use {
                 mapper.writeValue(it, alignment)
@@ -270,19 +280,35 @@ class DocumentReference(
     val docid: String? = null
 )
 
-class BurritoAudioAlignmentDeserializer @JvmOverloads constructor(vc: Class<*>? = null) : StdDeserializer<BurritoAudioAlignment>(vc) {
-    override fun deserialize(jp: com.fasterxml.jackson.core.JsonParser, ctxt: DeserializationContext): BurritoAudioAlignment? {
+class BurritoAudioAlignmentDeserializer @JvmOverloads constructor(vc: Class<*>? = null) :
+    StdDeserializer<BurritoAudioAlignment>(vc) {
+    override fun deserialize(
+        jp: com.fasterxml.jackson.core.JsonParser,
+        ctxt: DeserializationContext
+    ): BurritoAudioAlignment? {
         val node: JsonNode = jp.codec.readTree(jp)
 
         val format = node.get("format")?.asText()?.let { FormatType.fromValue(it) } ?: FormatType.ALIGNMENT
         val version = node.get("version")?.asText() ?: "0.3"
-        val type = node.get("type")?.asText() ?: throw MismatchedInputException.from(jp, BurritoAudioAlignment::class.java, "Missing required field: type")
+        val type = node.get("type")?.asText() ?: throw MismatchedInputException.from(
+            jp,
+            BurritoAudioAlignment::class.java,
+            "Missing required field: type"
+        )
 
         val documentsNode = node.get("documents")
         val documents: Documents? = if (documentsNode != null && !documentsNode.isNull) {
             if (documentsNode.isArray) {
-                val listType = ctxt.typeFactory.constructCollectionType(List::class.java, DocumentReference::class.java)
-                DocumentsList(jp.codec.readValue(documentsNode.traverse(), listType))
+                val listType = ctxt.typeFactory.constructCollectionType(
+                    List::class.java,
+                    DocumentReference::class.java
+                )
+                DocumentsList(
+                    jp.codec.readValue(
+                        documentsNode.traverse(),
+                        listType
+                    )
+                )
             } else if (documentsNode.isObject) {
                 val mapEntries = mutableMapOf<String, DocumentReference>()
                 documentsNode.fields().forEach { (key, valueNode) ->
@@ -300,7 +326,10 @@ class BurritoAudioAlignmentDeserializer @JvmOverloads constructor(vc: Class<*>? 
 
         val recordsNode = node.get("records")
         val records: List<Record> = if (recordsNode != null && recordsNode.isArray) {
-            val listType = ctxt.typeFactory.constructCollectionType(List::class.java, Record::class.java)
+            val listType = ctxt.typeFactory.constructCollectionType(
+                List::class.java,
+                Record::class.java
+            )
             jp.codec.readValue(recordsNode.traverse(), listType)
         } else {
             listOf()
@@ -316,12 +345,23 @@ class BurritoAudioAlignmentDeserializer @JvmOverloads constructor(vc: Class<*>? 
 
                 val groupDocuments: Documents? = if (groupDocumentsNode != null && !groupDocumentsNode.isNull) {
                     if (groupDocumentsNode.isArray) {
-                        val listType = ctxt.typeFactory.constructCollectionType(List::class.java, DocumentReference::class.java)
-                        DocumentsList(jp.codec.readValue(groupDocumentsNode.traverse(), listType))
+                        val listType = ctxt.typeFactory.constructCollectionType(
+                            List::class.java,
+                            DocumentReference::class.java
+                        )
+                        DocumentsList(
+                            jp.codec.readValue(
+                                groupDocumentsNode.traverse(),
+                                listType
+                            )
+                        )
                     } else if (groupDocumentsNode.isObject) {
                         val mapEntries = mutableMapOf<String, DocumentReference>()
                         groupDocumentsNode.fields().forEach { (key, valueNode) ->
-                            mapEntries[key] = jp.codec.treeToValue(valueNode, DocumentReference::class.java)
+                            mapEntries[key] = jp.codec.treeToValue(
+                                valueNode,
+                                DocumentReference::class.java
+                            )
                         }
                         DocumentsMap(mapEntries)
                     } else {
@@ -335,7 +375,10 @@ class BurritoAudioAlignmentDeserializer @JvmOverloads constructor(vc: Class<*>? 
                     if (groupRecordsNode.isEmpty) {
                         listOf()
                     } else {
-                        val listType = ctxt.typeFactory.constructCollectionType(List::class.java, Record::class.java)
+                        val listType = ctxt.typeFactory.constructCollectionType(
+                            List::class.java,
+                            Record::class.java
+                        )
                         jp.codec.readValue(groupRecordsNode.traverse(), listType)
                     }
                 } else {
@@ -377,7 +420,8 @@ class DocumentsSerializer @JvmOverloads constructor(t: Class<Documents>? = null)
     }
 }
 
-class BurritoAudioAlignmentSerializer @JvmOverloads constructor(t: Class<BurritoAudioAlignment>? = null) : StdSerializer<BurritoAudioAlignment>(t) {
+class BurritoAudioAlignmentSerializer @JvmOverloads constructor(t: Class<BurritoAudioAlignment>? = null) :
+    StdSerializer<BurritoAudioAlignment>(t) {
     override fun serialize(value: BurritoAudioAlignment?, gen: JsonGenerator, provider: SerializerProvider) {
         if (value == null) {
             gen.writeNull()
@@ -389,22 +433,23 @@ class BurritoAudioAlignmentSerializer @JvmOverloads constructor(t: Class<Burrito
         gen.writeStringField("version", value.version)
         gen.writeStringField("type", value.type)
 
+        if (value.roles != null) {
+            gen.writeFieldName("roles")
+            gen.writeObject(value.roles)
+        }
+
         // Conditionally serialize documents and records based on whether groups is present
         if (value.groups.isNullOrEmpty()) {
             if (value.documents != null) {
                 gen.writeFieldName("documents")
                 gen.writeObject(value.documents) // This will use DocumentsSerializer
             }
-            if (value.roles != null) {
-                gen.writeFieldName("roles")
-                gen.writeObject(value.roles)
-            }
             if (value.records.isNotEmpty()) {
                 gen.writeFieldName("records")
                 gen.writeObject(value.records)
             }
         } else {
-            // If groups is present, omit top-level documents, roles, and records
+            // If groups is present, omit top-level documents and records
             gen.writeFieldName("groups")
             gen.writeObject(value.groups)
         }
@@ -424,13 +469,39 @@ class GroupSerializer @JvmOverloads constructor(t: Class<Group>? = null) : StdSe
             gen.writeFieldName("documents")
             gen.writeObject(value.documents)
         }
-        // This condition 'value.records != null' is always true because records is List<Record> = listOf()
-        // and `Group`'s `records` is not nullable.
-        // We need to write it if it's not empty, or if `WRITE_EMPTY_JSON_ARRAYS` is true (which we set to false globally).
-        // So, only write if not empty, which `isNotEmpty()` already handles.
-        if (value.records.isNotEmpty()) {
-            gen.writeFieldName("records")
-            gen.writeObject(value.records)
+        gen.writeFieldName("records")
+        gen.writeObject(value.records)
+        gen.writeEndObject()
+    }
+}
+
+class RecordSerializer @JvmOverloads constructor(t: Class<Record>? = null) : StdSerializer<Record>(t) {
+    override fun serialize(value: Record?, gen: JsonGenerator, provider: SerializerProvider) {
+        if (value == null) {
+            gen.writeNull()
+            return
+        }
+
+        gen.writeStartObject()
+        if (value.cue != null && value.cue.isNotEmpty()) {
+            gen.writeFieldName("cue")
+            gen.writeObject(value.cue)
+        }
+        if (value.timecode != null && value.timecode.isNotEmpty()) {
+            gen.writeFieldName("timecode")
+            gen.writeObject(value.timecode)
+        }
+        if (value.textReference != null && value.textReference.isNotEmpty()) {
+            gen.writeFieldName("text-reference")
+            gen.writeObject(value.textReference)
+        }
+        if (value.references.isNotEmpty()) {
+            gen.writeFieldName("references")
+            gen.writeObject(value.references)
+        }
+        if (value.meta != null && value.meta.isNotEmpty()) {
+            gen.writeFieldName("meta")
+            gen.writeObject(value.meta)
         }
         gen.writeEndObject()
     }
