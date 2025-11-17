@@ -14,6 +14,10 @@ import org.bibletranslationtools.kotlinscripturealignment.serializers.BurritoAud
 import org.bibletranslationtools.kotlinscripturealignment.serializers.DocumentsSerializer
 import org.bibletranslationtools.kotlinscripturealignment.serializers.GroupSerializer
 import org.bibletranslationtools.kotlinscripturealignment.serializers.RecordSerializer
+import org.bibletranslationtools.vtt.Cue
+import org.bibletranslationtools.vtt.WebVttCue
+import org.bibletranslationtools.vtt.WebVttDocument
+import org.bibletranslationtools.vtt.WebvttParserUtil
 import java.io.File
 
 data class BurritoAudioAlignment(
@@ -75,23 +79,23 @@ data class BurritoAudioAlignment(
         return ""
     }
 
-    // @JsonIgnore
-    // fun getVttCues(): List<WebVttDocument.WebVttCueContent> {
-    //     val cues = records.map { record ->
-    //         record.toWebVttCueContent(this.roles)!!
-    //     }.toMutableList()
-    //
-    //     cues.sortWith { first, second ->
-    //         val startIsSame = first.startTimeUs == second.startTimeUs
-    //         val endIsGreater = first.endTimeUs > second.endTimeUs
-    //         when {
-    //             startIsSame && endIsGreater -> -1 // the greater end should come first
-    //             startIsSame && !endIsGreater -> 1
-    //             else -> first.startTimeUs.compareTo(second.startTimeUs)
-    //         }
-    //     }
-    //     return cues
-    // }
+    @JsonIgnore
+    fun getVttCues(): List<WebVttDocument.WebVttCueContent> {
+        val cues = records.map { record ->
+            record.toWebVttCueContent(this.roles)!!
+        }.toMutableList()
+
+        cues.sortWith { first, second ->
+            val startIsSame = first.cue.startTimeUs == second.cue.startTimeUs
+            val endIsGreater = first.cue.endTimeUs > second.cue.endTimeUs
+            when {
+                startIsSame && endIsGreater -> -1 // the greater end should come first
+                startIsSame && !endIsGreater -> 1
+                else -> first.cue.startTimeUs.compareTo(second.cue.startTimeUs)
+            }
+        }
+        return cues
+    }
 
     fun write(outFile: File) {
         val mapper = ObjectMapper().registerKotlinModule()
@@ -103,7 +107,6 @@ data class BurritoAudioAlignment(
         mapper.registerModule(module)
         
         mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false)
-        // mapper.configure(SerializationFeature.WRITE_EMPTY_JSON_ARRAYS, false) // Removed
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL)
         mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true)
 
@@ -118,15 +121,13 @@ data class BurritoAudioAlignment(
         }
     }
 
-    // fun setRecordsFromVttCueContent(content: List<WebVttDocument.WebVttCueContent>) {
-    //     records = content.map {
-    //         // val cue = it.cue
-    //         // val timecodeRef = listOf("${Companion.timestamp(cue.startTimeUs)} --> ${Companion.timestamp(cue.endTimeUs)}")
-    //         // val textRef = listOf(it.tag)
-    //         // We are setting cue and textReference directly here, not relying on 'references' initially
-    //         Record(meta = mapOf("creator" to "kotlin-aligner")) // Simplified for now
-    //     }
-    // }
+    fun setRecordsFromVttCueContent(content: List<WebVttDocument.WebVttCueContent>) {
+        records = content.map { vttCueContent ->
+            val cueText = listOf("${Companion.timestamp(vttCueContent.cue.startTimeUs)} --> ${Companion.timestamp(vttCueContent.cue.endTimeUs)}")
+            val textRef = listOf(vttCueContent.tag)
+            Record(cue = cueText, textReference = textRef, meta = mapOf("creator" to "kotlin-aligner"))
+        }
+    }
 
     companion object {
 
@@ -166,7 +167,6 @@ data class BurritoAudioAlignment(
             mapper.registerModule(module)
 
             mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false)
-            // mapper.configure(SerializationFeature.WRITE_EMPTY_JSON_ARRAYS, false) // Removed
             mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL)
             mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true)
 
@@ -178,8 +178,12 @@ data class BurritoAudioAlignment(
         }
 
         private fun timestamp(timeUs: Long): String {
-            // return WebvttParserUtil.toVttTimestamp(timeUs)
-            return ""
+            val hours = timeUs / 3_600_000_000L
+            val minutes = (timeUs % 3_600_000_000L) / 60_000_000L
+            val seconds = (timeUs % 60_000_000L) / 1_000_000L
+            val milliseconds = (timeUs % 1_000_000L) / 1000L
+
+            return String.format("%02d:%02d:%02d.%03d", hours, minutes, seconds, milliseconds)
         }
 
         fun load(timingFile: File): BurritoAudioAlignment {
