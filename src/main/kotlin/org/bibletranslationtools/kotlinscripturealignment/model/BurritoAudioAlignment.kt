@@ -18,6 +18,8 @@ import org.bibletranslationtools.vtt.Cue
 import org.bibletranslationtools.vtt.WebVttCue
 import org.bibletranslationtools.vtt.WebVttDocument
 import org.bibletranslationtools.vtt.WebvttParserUtil
+import org.bibletranslationtools.vtt.WebvttCueInfo
+import org.bibletranslationtools.vtt.WebvttParserUtil.parseTimestampUs
 import java.io.File
 
 data class BurritoAudioAlignment(

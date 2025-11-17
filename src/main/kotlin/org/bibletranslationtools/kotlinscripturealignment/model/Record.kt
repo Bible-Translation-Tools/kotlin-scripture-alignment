@@ -2,11 +2,12 @@ package org.bibletranslationtools.kotlinscripturealignment.model
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.bibletranslationtools.vtt.Cue
-import org.bibletranslationtools.vtt.WebVttCue
-import org.bibletranslationtools.vtt.WebVttDocument
-import org.bibletranslationtools.vtt.WebvttParserUtil
-import org.bibletranslationtools.vtt.WebvttCueInfo
+ import org.bibletranslationtools.vtt.Cue
+ import org.bibletranslationtools.vtt.WebVttCue
+ import org.bibletranslationtools.vtt.WebVttDocument
+ import org.bibletranslationtools.vtt.WebvttParserUtil
+ import org.bibletranslationtools.vtt.WebvttCueInfo
+import org.bibletranslationtools.vtt.WebvttParserUtil.parseTimestampUs
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -63,8 +64,8 @@ class Record(
         try {
             cueHeaderMatcher.matches()
             // Parse the cue start and end times.
-            val startTimeUs = WebvttParserUtil.parseTimestampUs(checkNotNull(cueHeaderMatcher.group(1)))
-            val endTimeUs = WebvttParserUtil.parseTimestampUs(checkNotNull(cueHeaderMatcher.group(2)))
+            val startTimeUs = parseTimestampUs(checkNotNull(cueHeaderMatcher.group(1)))
+            val endTimeUs = parseTimestampUs(checkNotNull(cueHeaderMatcher.group(2)))
 
             val wvc = WebVttCue(WebvttCueInfo(cue, startTimeUs, endTimeUs))
             return WebVttDocument.WebVttCueContent(reference, reference, wvc)
