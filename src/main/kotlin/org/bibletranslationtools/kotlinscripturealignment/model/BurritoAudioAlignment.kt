@@ -82,9 +82,48 @@ data class BurritoAudioAlignment(
     }
 
     @JsonIgnore
-    fun getVttCues(): List<WebVttDocument.WebVttCueContent> {
-        val cues = records.map { record ->
-            record.toWebVttCueContent(this.roles)!!
+    fun getVttCues(docid: String): List<WebVttDocument.WebVttCueContent> {
+        val targetDocuments: Documents?
+        val targetRecords: List<Record>
+        val targetRoles: List<String>?
+
+        if (!groups.isNullOrEmpty()) {
+            val targetGroup = groups!!.firstOrNull { group ->
+                val groupDocs = group.documents
+                val foundInGroup = when (groupDocs) {
+                    is DocumentsList -> groupDocs.list.any { it.scheme == "vtt-timecode" && it.docid == docid }
+                    is DocumentsMap -> groupDocs.map.any { (key, docRef) -> docRef.scheme == "vtt-timecode" && docRef.docid == docid }
+                    else -> false
+                }
+                foundInGroup
+            }
+            if (targetGroup != null) {
+                targetDocuments = targetGroup.documents
+                targetRecords = targetGroup.records
+                targetRoles = this.roles // Roles are typically hoisted to top-level for all groups
+            } else {
+                throw IllegalArgumentException("No group found with vtt-timecode document for docid: $docid")
+            }
+        } else {
+            // Use top-level documents and records (implicit single group)
+            val topLevelDocs = this.documents
+            val docidFound: Boolean = when (topLevelDocs) {
+                is DocumentsList -> topLevelDocs.list.any { it.scheme == "vtt-timecode" && it.docid == docid }
+                is DocumentsMap -> topLevelDocs.map.any { (key, docRef) -> docRef.scheme == "vtt-timecode" && docRef.docid == docid }
+                else -> false
+            }
+
+            if (docidFound) {
+                targetDocuments = topLevelDocs
+                targetRecords = this.records
+                targetRoles = this.roles
+            } else {
+                throw IllegalArgumentException("No top-level vtt-timecode document found for docid: $docid")
+            }
+        }
+
+        val cues = targetRecords.map { record ->
+            record.toWebVttCueContent(targetRoles)!!
         }.toMutableList()
 
         cues.sortWith { first, second ->
@@ -123,7 +162,7 @@ data class BurritoAudioAlignment(
         }
     }
 
-    fun setRecordsFromVttCueContent(content: List<WebVttDocument.WebVttCueContent>) {
+    fun setRecordsFromVttCueContent(docid: String, content: List<WebVttDocument.WebVttCueContent>) {
         val newRecords = content.map { vttCueContent ->
             val cueText = listOf("${Companion.timestamp(vttCueContent.cue.startTimeUs)} --> ${Companion.timestamp(vttCueContent.cue.endTimeUs)}")
             val textRef = listOf(vttCueContent.tag)
@@ -131,13 +170,35 @@ data class BurritoAudioAlignment(
         }
 
         if (!groups.isNullOrEmpty()) {
-            // Update records of the first group
-            val firstGroup = groups!!.first()
-            val updatedGroup = firstGroup.copy(records = newRecords)
-            groups = listOf(updatedGroup) + groups!!.drop(1)
+            // Update records of the target group
+            val updatedGroups = groups!!.map { group ->
+                val groupDocs = group.documents
+                val targetGroupFound: Boolean = when (groupDocs) {
+                    is DocumentsList -> groupDocs.list.any { it.scheme == "vtt-timecode" && it.docid == docid }
+                    is DocumentsMap -> groupDocs.map.any { (key, docRef) -> docRef.scheme == "vtt-timecode" && docRef.docid == docid }
+                    else -> false
+                }
+
+                if (targetGroupFound) {
+                    group.copy(records = newRecords)
+                } else {
+                    group
+                }
+            }
+            groups = updatedGroups
         } else {
             // Update top-level records
-            records = newRecords
+            val topLevelDocs = this.documents
+            val docidFound: Boolean = when (topLevelDocs) {
+                is DocumentsList -> topLevelDocs.list.any { it.scheme == "vtt-timecode" && it.docid == docid }
+                is DocumentsMap -> topLevelDocs.map.any { (key, docRef) -> docRef.scheme == "vtt-timecode" && docRef.docid == docid }
+                else -> false
+            }
+            if (docidFound) {
+                records = newRecords
+            } else {
+                throw IllegalArgumentException("No top-level vtt-timecode document found for docid: $docid for setting records.")
+            }
         }
     }
 

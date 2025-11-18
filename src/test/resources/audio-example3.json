@@ -4,7 +4,7 @@
     "type": "audio-reference",
     "documents": {
         "timecode": {
-            "scheme": "vtt-timestamp",
+            "scheme": "vtt-timecode",
             "docid": "en_ulb_psa_c117.mp3"
         },
         "text-reference": {
