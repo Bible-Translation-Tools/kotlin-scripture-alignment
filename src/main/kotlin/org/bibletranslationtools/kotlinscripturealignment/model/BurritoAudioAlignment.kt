@@ -124,10 +124,20 @@ data class BurritoAudioAlignment(
     }
 
     fun setRecordsFromVttCueContent(content: List<WebVttDocument.WebVttCueContent>) {
-        records = content.map { vttCueContent ->
+        val newRecords = content.map { vttCueContent ->
             val cueText = listOf("${Companion.timestamp(vttCueContent.cue.startTimeUs)} --> ${Companion.timestamp(vttCueContent.cue.endTimeUs)}")
             val textRef = listOf(vttCueContent.tag)
             Record(cue = cueText, textReference = textRef, meta = mapOf("creator" to "kotlin-aligner"))
+        }
+
+        if (!groups.isNullOrEmpty()) {
+            // Update records of the first group
+            val firstGroup = groups!!.first()
+            val updatedGroup = firstGroup.copy(records = newRecords)
+            groups = listOf(updatedGroup) + groups!!.drop(1)
+        } else {
+            // Update top-level records
+            records = newRecords
         }
     }
 

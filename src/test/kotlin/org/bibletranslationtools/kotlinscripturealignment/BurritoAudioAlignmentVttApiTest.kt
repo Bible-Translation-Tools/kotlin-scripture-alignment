@@ -125,4 +125,66 @@ class BurritoAudioAlignmentVttApiTest {
 
         assertEquals(originalJsonNode, newJsonNode)
     }
+
+    @Test
+    fun testVttRoundTripForAudioExample3() {
+        val timingFile = File("src/test/resources/audio-example3.json")
+        val originalAlignment = BurritoAudioAlignment.Companion.load(timingFile)
+
+        // Normalize the original alignment to the cue/text-reference format
+        val normalizedOriginalAlignment = BurritoAudioAlignment(
+            originalAlignment.format,
+            originalAlignment.version,
+            originalAlignment.type,
+            originalAlignment.documents,
+            originalAlignment.roles,
+            listOf(), // Start with empty records
+            originalAlignment.groups
+        )
+        normalizedOriginalAlignment.setRecordsFromVttCueContent(originalAlignment.getVttCues())
+
+        // 1. Get VTT cues from original alignment
+        val vttCues = originalAlignment.getVttCues()
+
+        // 2. Create a new alignment and set records from VTT cues
+        val newAlignment = BurritoAudioAlignment(originalAlignment.format, originalAlignment.version, originalAlignment.type, originalAlignment.documents, originalAlignment.roles, listOf(), originalAlignment.groups)
+        newAlignment.setRecordsFromVttCueContent(vttCues)
+
+        // 3. Serialize both to JSON and compare
+        val originalJsonNode = mapper.readTree(mapper.writeValueAsString(normalizedOriginalAlignment))
+        val newJsonNode = mapper.readTree(mapper.writeValueAsString(newAlignment))
+
+        assertEquals(originalJsonNode, newJsonNode)
+    }
+
+    @Test
+    fun testVttRoundTripForApmExample() {
+        val timingFile = File("src/test/resources/apm_example.json")
+        val originalAlignment = BurritoAudioAlignment.Companion.load(timingFile)
+
+        // Normalize the original alignment to the cue/text-reference format
+        val normalizedOriginalAlignment = BurritoAudioAlignment(
+            originalAlignment.format,
+            originalAlignment.version,
+            originalAlignment.type,
+            originalAlignment.documents,
+            originalAlignment.roles,
+            listOf(), // Start with empty records
+            originalAlignment.groups
+        )
+        normalizedOriginalAlignment.setRecordsFromVttCueContent(originalAlignment.getVttCues())
+
+        // 1. Get VTT cues from original alignment
+        val vttCues = originalAlignment.getVttCues()
+
+        // 2. Create a new alignment and set records from VTT cues
+        val newAlignment = BurritoAudioAlignment(originalAlignment.format, originalAlignment.version, originalAlignment.type, originalAlignment.documents, originalAlignment.roles, listOf(), originalAlignment.groups)
+        newAlignment.setRecordsFromVttCueContent(vttCues)
+
+        // 3. Serialize both to JSON and compare
+        val originalJsonNode = mapper.readTree(mapper.writeValueAsString(normalizedOriginalAlignment))
+        val newJsonNode = mapper.readTree(mapper.writeValueAsString(newAlignment))
+
+        assertEquals(originalJsonNode, newJsonNode)
+    }
 }
