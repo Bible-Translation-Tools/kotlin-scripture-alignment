@@ -81,6 +81,28 @@ data class BurritoAudioAlignment(
         return ""
     }
 
+    fun getAllDocids(): List<String> {
+        val docids = mutableSetOf<String>()
+
+        if (!groups.isNullOrEmpty()) {
+            groups!!.forEach { group ->
+                val groupDocs = group.documents
+                when (groupDocs) {
+                    is DocumentsList -> groupDocs.list.forEach { if (it.docid != null) docids.add(it.docid) }
+                    is DocumentsMap -> groupDocs.map.forEach { (key, docRef) -> if (docRef.docid != null) docids.add(docRef.docid) }
+                    else -> {}
+                }
+            }
+        } else if (documents != null) {
+            when (documents) {
+                is DocumentsList -> (documents as DocumentsList).list.forEach { if (it.docid != null) docids.add(it.docid) }
+                is DocumentsMap -> (documents as DocumentsMap).map.forEach { (key, docRef) -> if (docRef.docid != null) docids.add(docRef.docid) }
+                else -> {}
+            }
+        }
+        return docids.toList()
+    }
+
     @JsonIgnore
     fun getVttCues(docid: String): List<WebVttDocument.WebVttCueContent> {
         val targetDocuments: Documents?

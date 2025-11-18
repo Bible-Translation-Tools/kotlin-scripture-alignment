@@ -320,4 +320,23 @@ class BurritoAudioAlignmentVttApiTest {
 
         assertEquals(originalJsonNode, newJsonNode)
     }
+
+    @Test
+    fun testGetAllDocids() {
+        val alignment1 = BurritoAudioAlignment.Companion.load(File("src/test/resources/audio-example1.json"))
+        val docids1 = alignment1.getAllDocids()
+        assertEquals(1, docids1.size)
+        assertTrue(docids1.contains("ephesians_example_with_footnotes.mp3"))
+
+        val alignment3 = BurritoAudioAlignment.Companion.load(File("src/test/resources/audio-example3.json"))
+        val docids3 = alignment3.getAllDocids()
+        assertEquals(1, docids3.size)
+        assertTrue(docids3.contains("en_ulb_psa_c117.mp3"))
+
+        val apmAlignment = BurritoAudioAlignment.Companion.load(File("src/test/resources/apm_example.json"))
+        val apmDocids = apmAlignment.getAllDocids()
+        assertEquals(15, apmDocids.size)
+        assertTrue(apmDocids.contains("42LUK/001/SEHSAM-LUK-1_1-4v1.mp3"))
+        assertTrue(apmDocids.contains("42LUK/001/SEHSAM-LUK-1_67-80v1.mp3"))
+    }
 }
