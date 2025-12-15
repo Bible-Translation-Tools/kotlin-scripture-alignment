@@ -1,6 +1,5 @@
 package org.bibletranslationtools.kotlinscripturealignment.model
 
-import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.DeserializationFeature
@@ -14,12 +13,7 @@ import org.bibletranslationtools.kotlinscripturealignment.serializers.BurritoAud
 import org.bibletranslationtools.kotlinscripturealignment.serializers.DocumentsSerializer
 import org.bibletranslationtools.kotlinscripturealignment.serializers.GroupSerializer
 import org.bibletranslationtools.kotlinscripturealignment.serializers.RecordSerializer
-import org.bibletranslationtools.vtt.Cue
-import org.bibletranslationtools.vtt.WebVttCue
 import org.bibletranslationtools.vtt.WebVttDocument
-import org.bibletranslationtools.vtt.WebvttParserUtil
-import org.bibletranslationtools.vtt.WebvttCueInfo
-import org.bibletranslationtools.vtt.WebvttParserUtil.parseTimestampUs
 import java.io.File
 
 data class BurritoAudioAlignment(
@@ -188,7 +182,7 @@ data class BurritoAudioAlignment(
         val newRecords = content.map { vttCueContent ->
             val cueText = listOf("${Companion.timestamp(vttCueContent.cue.startTimeUs)} --> ${Companion.timestamp(vttCueContent.cue.endTimeUs)}")
             val textRef = listOf(vttCueContent.tag)
-            Record(cue = cueText, textReference = textRef, meta = mapOf("creator" to "kotlin-aligner"))
+            Record(timecode = cueText, textReference = textRef, meta = mapOf("creator" to "kotlin-aligner"))
         }
 
         if (!groups.isNullOrEmpty()) {

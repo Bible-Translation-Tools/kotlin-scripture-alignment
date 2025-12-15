@@ -43,11 +43,11 @@
       "items": {
         "type": "object",
         "required": [
-          "cue",
+          "timecode",
           "text-reference"
         ],
         "properties": {
-          "cue": {
+          "timecode": {
             "type": "array",
             "description": "List of timecode strings",
             "items": {

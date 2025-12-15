@@ -26,12 +26,12 @@ class BurritoAudioAlignmentMalformedJsonTest {
                 ],
                 "records": [
                     {
-                        "cue": ["00:00:00.000 --> 00:00:01.000"],
+                        "timecode": ["00:00:00.000 --> 00:00:01.000"],
                         "text-reference": ["text-ref-1"]
                     },
                     // Missing comma here
                     {
-                        "cue": ["00:00:01.000 --> 00:00:02.000"],
+                        "timecode": ["00:00:01.000 --> 00:00:02.000"],
                         "text-reference": ["text-ref-2"]
                     }
                 ]

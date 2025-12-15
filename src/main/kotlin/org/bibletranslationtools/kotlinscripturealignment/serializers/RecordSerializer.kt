@@ -13,10 +13,6 @@ class RecordSerializer @JvmOverloads constructor(t: Class<Record>? = null) : Std
         }
 
         gen.writeStartObject()
-        if (value.cue != null && value.cue.isNotEmpty()) {
-            gen.writeFieldName("cue")
-            gen.writeObject(value.cue)
-        }
         if (value.timecode != null && value.timecode.isNotEmpty()) {
             gen.writeFieldName("timecode")
             gen.writeObject(value.timecode)

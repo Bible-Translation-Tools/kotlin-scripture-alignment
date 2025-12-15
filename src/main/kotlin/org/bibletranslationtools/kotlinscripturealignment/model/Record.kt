@@ -5,17 +5,12 @@ import com.fasterxml.jackson.annotation.JsonProperty
  import org.bibletranslationtools.vtt.Cue
  import org.bibletranslationtools.vtt.WebVttCue
  import org.bibletranslationtools.vtt.WebVttDocument
- import org.bibletranslationtools.vtt.WebvttParserUtil
- import org.bibletranslationtools.vtt.WebvttCueInfo
+import org.bibletranslationtools.vtt.WebvttCueInfo
 import org.bibletranslationtools.vtt.WebvttParserUtil.parseTimestampUs
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 class Record(
-    @JsonProperty("cue")
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    val cue: List<String>? = null,
-
     @JsonProperty("timecode")
     @JsonInclude(JsonInclude.Include.NON_NULL)
     val timecode: List<String>? = null,
@@ -36,7 +31,7 @@ class Record(
         val rawReference: String?
 
         // Prioritize direct fields if available
-        rawTimestamp = this.cue?.firstOrNull() ?: this.timecode?.firstOrNull()
+        rawTimestamp = this.timecode?.firstOrNull()
         rawReference = this.textReference?.firstOrNull()
 
         if (rawTimestamp == null || rawReference == null) {

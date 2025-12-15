@@ -16,9 +16,7 @@ import org.bibletranslationtools.kotlinscripturealignment.model.DocumentsList
 import org.bibletranslationtools.vtt.Cue
 import org.bibletranslationtools.vtt.WebVttCue
 import org.bibletranslationtools.vtt.WebVttDocument
-import org.bibletranslationtools.vtt.WebvttParserUtil
 import org.bibletranslationtools.vtt.WebvttCueInfo
-import org.bibletranslationtools.vtt.WebvttParserUtil.parseTimestampUs
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -123,12 +121,12 @@ class BurritoAudioAlignmentVttApiTest {
         assertEquals(2, alignment.records.size)
 
         val firstRecord = alignment.records[0]
-        assertEquals(listOf("00:00:00.000 --> 00:00:01.000"), firstRecord.cue)
+        assertEquals(listOf("00:00:00.000 --> 00:00:01.000"), firstRecord.timecode)
         assertEquals(listOf("v1"), firstRecord.textReference)
         assertEquals(mapOf("creator" to "kotlin-aligner"), firstRecord.meta)
 
         val secondRecord = alignment.records[1]
-        assertEquals(listOf("00:00:01.000 --> 00:00:02.000"), secondRecord.cue)
+        assertEquals(listOf("00:00:01.000 --> 00:00:02.000"), secondRecord.timecode)
         assertEquals(listOf("v2"), secondRecord.textReference)
         assertEquals(mapOf("creator" to "kotlin-aligner"), secondRecord.meta)
     }
@@ -165,7 +163,7 @@ class BurritoAudioAlignmentVttApiTest {
 
         assertEquals(1, targetGroup.records.size)
         val updatedRecord = targetGroup.records.first()
-        assertEquals(listOf("00:00:00.000 --> 00:00:00.500"), updatedRecord.cue)
+        assertEquals(listOf("00:00:00.000 --> 00:00:00.500"), updatedRecord.timecode)
         assertEquals(listOf("new_v1"), updatedRecord.textReference)
 
         // Verify a different group remains unchanged

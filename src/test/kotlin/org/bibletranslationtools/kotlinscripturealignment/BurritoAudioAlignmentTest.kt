@@ -46,7 +46,7 @@ class BurritoAudioAlignmentTest {
         assertEquals(null, documentsMap?.map?.get("text-reference")?.docid)
         assertNull(alignment.roles)
         assertEquals(52, alignment.records.size)
-        assertEquals(listOf("00:00:00.000 --> 00:00:01.927"), alignment.records[0].cue)
+        assertEquals(listOf("00:00:00.000 --> 00:00:01.927"), alignment.records[0].timecode)
         assertEquals(listOf("en+ulb.EPH:0"), alignment.records[0].textReference)
     }
 

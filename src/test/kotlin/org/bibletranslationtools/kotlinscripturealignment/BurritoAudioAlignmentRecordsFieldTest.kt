@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.io.File
 import org.bibletranslationtools.kotlinscripturealignment.model.BurritoAudioAlignment
-import org.bibletranslationtools.kotlinscripturealignment.model.Record
 
 class BurritoAudioAlignmentRecordsFieldTest {
 
@@ -41,7 +40,7 @@ class BurritoAudioAlignmentRecordsFieldTest {
                 "documents": [],
                 "records": [
                     {
-                        "cue": ["00:00:00.000 --> 00:00:01.000"],
+                        "timecode": ["00:00:00.000 --> 00:00:01.000"],
                         "text-reference": ["text-ref-1"]
                     }
                 ]
@@ -53,7 +52,7 @@ class BurritoAudioAlignmentRecordsFieldTest {
         val alignment = BurritoAudioAlignment.load(tempFile)
         assertEquals(1, alignment.records.size)
         val record = alignment.records.first()
-        assertEquals(listOf("00:00:00.000 --> 00:00:01.000"), record.cue)
+        assertEquals(listOf("00:00:00.000 --> 00:00:01.000"), record.timecode)
         assertEquals(listOf("text-ref-1"), record.textReference)
         assertTrue(record.references.isEmpty())
 
@@ -82,7 +81,7 @@ class BurritoAudioAlignmentRecordsFieldTest {
         assertEquals(1, alignment.records.size)
         val record = alignment.records.first()
         assertEquals(listOf(listOf("00:00:00.000 --> 00:00:01.000"), listOf("text-ref-1")), record.references)
-        assertEquals(null, record.cue)
+        assertEquals(null, record.timecode)
         assertEquals(null, record.textReference)
 
         tempFile.delete()
@@ -98,7 +97,7 @@ class BurritoAudioAlignmentRecordsFieldTest {
                 "documents": [],
                 "records": [
                     {
-                        "cue": ["00:00:00.000 --> 00:00:01.000"],
+                        "timecode": ["00:00:00.000 --> 00:00:01.000"],
                         "text-reference": ["text-ref-1"],
                         "meta": {
                             "creator": "test-tool",
