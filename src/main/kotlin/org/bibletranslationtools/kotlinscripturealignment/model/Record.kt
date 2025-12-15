@@ -21,10 +21,7 @@ class Record(
 
     @JsonProperty("references")
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    val references: List<List<String>> = listOf(),
-    @JsonProperty("meta")
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    val meta: Map<String, Any>? = null
+    val references: List<List<String>> = listOf()
 ) {
     fun toWebVttCueContent(roles: List<String>?): WebVttDocument.WebVttCueContent? {
         val rawTimestamp: String?

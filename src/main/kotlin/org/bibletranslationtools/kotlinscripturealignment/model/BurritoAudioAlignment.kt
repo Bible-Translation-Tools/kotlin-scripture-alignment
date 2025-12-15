@@ -182,7 +182,7 @@ data class BurritoAudioAlignment(
         val newRecords = content.map { vttCueContent ->
             val cueText = listOf("${Companion.timestamp(vttCueContent.cue.startTimeUs)} --> ${Companion.timestamp(vttCueContent.cue.endTimeUs)}")
             val textRef = listOf(vttCueContent.tag)
-            Record(timecode = cueText, textReference = textRef, meta = mapOf("creator" to "kotlin-aligner"))
+            Record(timecode = cueText, textReference = textRef)
         }
 
         if (!groups.isNullOrEmpty()) {

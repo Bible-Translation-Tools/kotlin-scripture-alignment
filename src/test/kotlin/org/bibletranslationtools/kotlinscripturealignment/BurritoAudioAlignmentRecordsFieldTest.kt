@@ -86,45 +86,4 @@ class BurritoAudioAlignmentRecordsFieldTest {
 
         tempFile.delete()
     }
-
-    @Test
-    fun testRecordsWithDiverseMetaData() {
-        val json = """
-            {
-                "format": "alignment",
-                "version": "0.3",
-                "type": "audio-reference",
-                "documents": [],
-                "records": [
-                    {
-                        "timecode": ["00:00:00.000 --> 00:00:01.000"],
-                        "text-reference": ["text-ref-1"],
-                        "meta": {
-                            "creator": "test-tool",
-                            "duration": 1.0,
-                            "is_verified": true,
-                            "tags": ["tag1", "tag2"],
-                            "nested": {"key": "value"}
-                        }
-                    }
-                ]
-            }
-        """
-        val tempFile = File.createTempFile("records_diverse_meta", ".json")
-        tempFile.writeText(json)
-
-        val alignment = BurritoAudioAlignment.load(tempFile)
-        assertEquals(1, alignment.records.size)
-        val record = alignment.records.first()
-        assertNotNull(record.meta)
-        assertEquals("test-tool", (record.meta as Map<String, Any>)["creator"])
-        assertEquals(1.0, (record.meta as Map<String, Any>)["duration"])
-        assertEquals(true, (record.meta as Map<String, Any>)["is_verified"])
-        assertTrue((record.meta as Map<String, Any>)["tags"] is List<*>)
-        assertEquals(listOf("tag1", "tag2"), (record.meta as Map<String, Any>)["tags"])
-        assertTrue((record.meta as Map<String, Any>)["nested"] is Map<*, *>)
-        assertEquals(mapOf("key" to "value"), (record.meta as Map<String, Any>)["nested"])
-
-        tempFile.delete()
-    }
 }

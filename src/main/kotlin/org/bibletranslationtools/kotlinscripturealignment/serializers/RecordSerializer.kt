@@ -25,10 +25,6 @@ class RecordSerializer @JvmOverloads constructor(t: Class<Record>? = null) : Std
             gen.writeFieldName("references")
             gen.writeObject(value.references)
         }
-        if (value.meta != null && value.meta.isNotEmpty()) {
-            gen.writeFieldName("meta")
-            gen.writeObject(value.meta)
-        }
         gen.writeEndObject()
     }
 }

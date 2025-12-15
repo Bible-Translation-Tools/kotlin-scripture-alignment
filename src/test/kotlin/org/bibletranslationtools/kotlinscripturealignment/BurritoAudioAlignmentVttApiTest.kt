@@ -123,12 +123,10 @@ class BurritoAudioAlignmentVttApiTest {
         val firstRecord = alignment.records[0]
         assertEquals(listOf("00:00:00.000 --> 00:00:01.000"), firstRecord.timecode)
         assertEquals(listOf("v1"), firstRecord.textReference)
-        assertEquals(mapOf("creator" to "kotlin-aligner"), firstRecord.meta)
 
         val secondRecord = alignment.records[1]
         assertEquals(listOf("00:00:01.000 --> 00:00:02.000"), secondRecord.timecode)
         assertEquals(listOf("v2"), secondRecord.textReference)
-        assertEquals(mapOf("creator" to "kotlin-aligner"), secondRecord.meta)
     }
 
     @Test
